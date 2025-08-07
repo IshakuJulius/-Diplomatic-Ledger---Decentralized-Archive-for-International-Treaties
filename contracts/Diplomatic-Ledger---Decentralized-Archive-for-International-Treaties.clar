@@ -4,6 +4,7 @@
 (define-constant err-already-exists (err u102))
 (define-constant err-invalid-validator (err u103))
 (define-constant err-max-annotations (err u104))
+(define-constant err-invalid-parent (err u105))
 
 (define-data-var next-treaty-id uint u1)
 (define-data-var next-validator-id uint u1)
@@ -16,7 +17,10 @@
         timestamp: uint,
         ipfs-hash: (string-ascii 64),
         status: (string-ascii 20),
-        validator: principal
+        validator: principal,
+        version: uint,
+        parent-treaty-id: (optional uint),
+        amendment-reason: (string-ascii 200)
     }
 )
 
@@ -39,6 +43,11 @@
     })
 )
 
+(define-map treaty-versions
+    uint
+    (list 20 uint)
+)
+
 (define-public (register-treaty
     (title (string-ascii 100))
     (countries (list 10 principal))
@@ -53,9 +62,13 @@
                 timestamp: burn-block-height,
                 ipfs-hash: ipfs-hash,
                 status: "active",
-                validator: tx-sender
+                validator: tx-sender,
+                version: u1,
+                parent-treaty-id: none,
+                amendment-reason: ""
             }
         )
+        (map-set treaty-versions treaty-id (list treaty-id))
         (var-set next-treaty-id (+ treaty-id u1))
         (ok treaty-id)
     )
@@ -94,12 +107,10 @@
             treaty-id
             (unwrap! (as-max-len? (append 
                 current-annotations 
-
                 {
                     annotator: tx-sender,
                     content: content,
                     timestamp: burn-block-height
-
                 }
             ) u50) err-max-annotations)
         )
@@ -133,5 +144,86 @@
             (merge treaty { status: new-status })
         )
         (ok true)
+    )
+)
+
+(define-public (create-treaty-amendment
+    (parent-treaty-id uint)
+    (title (string-ascii 100))
+    (countries (list 10 principal))
+    (ipfs-hash (string-ascii 64))
+    (amendment-reason (string-ascii 200)))
+    (let
+        ((parent-treaty (unwrap! (map-get? treaties parent-treaty-id) err-not-found))
+         (parent-version (get version parent-treaty))
+         (current-versions (default-to (list) (map-get? treaty-versions parent-treaty-id)))
+         (new-treaty-id (var-get next-treaty-id)))
+        (asserts! (is-validator tx-sender) err-invalid-validator)
+        (asserts! (is-eq (get status parent-treaty) "active") err-invalid-parent)
+        (asserts! (< (len current-versions) u20) err-max-annotations)
+        (map-set treaties new-treaty-id
+            {
+                title: title,
+                countries: countries,
+                timestamp: burn-block-height,
+                ipfs-hash: ipfs-hash,
+                status: "active",
+                validator: tx-sender,
+                version: (+ parent-version u1),
+                parent-treaty-id: (some parent-treaty-id),
+                amendment-reason: amendment-reason
+            }
+        )
+        (map-set treaty-versions parent-treaty-id
+            (unwrap! (as-max-len? (append current-versions new-treaty-id) u20) err-max-annotations)
+        )
+        (map-set treaty-versions new-treaty-id (list new-treaty-id))
+        (map-set treaties parent-treaty-id
+            (merge parent-treaty { status: "superseded" })
+        )
+        (var-set next-treaty-id (+ new-treaty-id u1))
+        (ok new-treaty-id)
+    )
+)
+
+(define-read-only (get-treaty-versions (treaty-id uint))
+    (ok (default-to (list) (map-get? treaty-versions treaty-id)))
+)
+
+(define-read-only (get-latest-treaty-version (treaty-id uint))
+    (let
+        ((versions (default-to (list) (map-get? treaty-versions treaty-id))))
+        (if (> (len versions) u0)
+            (ok (unwrap-panic (element-at versions (- (len versions) u1))))
+            err-not-found
+        )
+    )
+)
+
+(define-read-only (get-treaty-version-history (treaty-id uint))
+    (let
+        ((versions (default-to (list) (map-get? treaty-versions treaty-id))))
+        (ok (map get-treaty-basic-info versions))
+    )
+)
+
+(define-read-only (get-treaty-basic-info (treaty-id uint))
+    (match (map-get? treaties treaty-id)
+        treaty-data {
+            id: treaty-id,
+            title: (get title treaty-data),
+            version: (get version treaty-data),
+            timestamp: (get timestamp treaty-data),
+            status: (get status treaty-data),
+            amendment-reason: (get amendment-reason treaty-data)
+        }
+        {
+            id: treaty-id,
+            title: "",
+            version: u0,
+            timestamp: u0,
+            status: "",
+            amendment-reason: ""
+        }
     )
 )
