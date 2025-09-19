@@ -48,6 +48,11 @@
     (list 20 uint)
 )
 
+(define-map treaty-ratifications
+    uint
+    (list 10 principal)
+)
+
 (define-public (register-treaty
     (title (string-ascii 100))
     (countries (list 10 principal))
@@ -186,6 +191,21 @@
     )
 )
 
+(define-public (ratify-treaty (treaty-id uint))
+    (let
+        ((treaty (unwrap! (map-get? treaties treaty-id) err-not-found))
+         (countries (get countries treaty))
+         (current-ratifications (default-to (list) (map-get? treaty-ratifications treaty-id))))
+        (asserts! (is-some (index-of countries tx-sender)) err-invalid-validator)
+        (asserts! (not (is-some (index-of current-ratifications tx-sender))) err-already-exists)
+        (map-set treaty-ratifications
+            treaty-id
+            (unwrap! (as-max-len? (append current-ratifications tx-sender) u10) err-max-annotations)
+        )
+        (ok true)
+    )
+)
+
 (define-read-only (get-treaty-versions (treaty-id uint))
     (ok (default-to (list) (map-get? treaty-versions treaty-id)))
 )
@@ -226,4 +246,8 @@
             amendment-reason: ""
         }
     )
+)
+
+(define-read-only (get-treaty-ratifications (treaty-id uint))
+    (ok (default-to (list) (map-get? treaty-ratifications treaty-id)))
 )
