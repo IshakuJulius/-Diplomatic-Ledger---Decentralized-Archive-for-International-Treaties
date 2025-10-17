@@ -9,6 +9,7 @@ A blockchain-based solution for preserving and managing international diplomatic
 - 🔍 Public treaty lookup
 - ✍️ Verified annotations system
 - 🌐 Multi-country support
+- ⏰ Treaty expiration management
 
 ## 🚀 Getting Started
 
@@ -25,6 +26,7 @@ A blockchain-based solution for preserving and managing international diplomatic
 (register-treaty title countries ipfs-hash)
 (add-annotation treaty-id content)
 (update-treaty-status treaty-id new-status)
+(set-treaty-expiration treaty-id expiration-block)
 ```
 
 #### For Administrators
@@ -39,6 +41,7 @@ A blockchain-based solution for preserving and managing international diplomatic
 (get-treaty treaty-id)
 (get-treaty-annotations treaty-id)
 (get-validator-info address)
+(is-treaty-expired treaty-id)
 ```
 
 ## 🔐 Security

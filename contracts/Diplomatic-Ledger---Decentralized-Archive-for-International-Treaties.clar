@@ -10,7 +10,7 @@
 (define-data-var next-validator-id uint u1)
 
 (define-map treaties
-    uint 
+    uint
     {
         title: (string-ascii 100),
         countries: (list 10 principal),
@@ -20,7 +20,8 @@
         validator: principal,
         version: uint,
         parent-treaty-id: (optional uint),
-        amendment-reason: (string-ascii 200)
+        amendment-reason: (string-ascii 200),
+        expiration: (optional uint)
     }
 )
 
@@ -70,7 +71,8 @@
                 validator: tx-sender,
                 version: u1,
                 parent-treaty-id: none,
-                amendment-reason: ""
+                amendment-reason: "",
+                expiration: none
             }
         )
         (map-set treaty-versions treaty-id (list treaty-id))
@@ -176,7 +178,8 @@
                 validator: tx-sender,
                 version: (+ parent-version u1),
                 parent-treaty-id: (some parent-treaty-id),
-                amendment-reason: amendment-reason
+                amendment-reason: amendment-reason,
+                expiration: none
             }
         )
         (map-set treaty-versions parent-treaty-id
@@ -250,4 +253,28 @@
 
 (define-read-only (get-treaty-ratifications (treaty-id uint))
     (ok (default-to (list) (map-get? treaty-ratifications treaty-id)))
+)
+(define-public (set-treaty-expiration
+    (treaty-id uint)
+    (expiration-block uint))
+    (let
+        ((treaty (unwrap! (map-get? treaties treaty-id) err-not-found)))
+        (asserts! (is-validator tx-sender) err-invalid-validator)
+        (asserts! (> expiration-block burn-block-height) err-invalid-parent)
+        (map-set treaties treaty-id
+            (merge treaty { expiration: (some expiration-block) })
+        )
+        (ok true)
+    )
+)
+
+(define-read-only (is-treaty-expired (treaty-id uint))
+    (let
+        ((treaty (unwrap! (map-get? treaties treaty-id) err-not-found))
+         (expiration (get expiration treaty)))
+        (match expiration
+            exp-block (ok (> burn-block-height exp-block))
+            (ok false)
+        )
+    )
 )
