@@ -54,6 +54,11 @@
     (list 10 principal)
 )
 
+(define-map treaty-tags
+    uint
+    (list 20 (string-ascii 50))
+)
+
 (define-public (register-treaty
     (title (string-ascii 100))
     (countries (list 10 principal))
@@ -278,3 +283,4 @@
         )
     )
 )
+

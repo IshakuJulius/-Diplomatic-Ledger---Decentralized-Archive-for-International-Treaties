@@ -80,4 +80,25 @@ Testing completed:
 - ✅ Validator management
 - ✅ Annotation system
 - ✅ Access control
+## 🏷️ Treaty Tagging System
+
+Enhance treaty discoverability with a flexible tagging mechanism that allows validators to assign relevant keywords and categories to treaties. This feature enables efficient searching and categorization of diplomatic documents, improving accessibility for researchers and policymakers.
+
+### Key Benefits:
+- 🔍 **Advanced Search**: Quickly locate treaties by topics, regions, or themes
+- 📊 **Data Analytics**: Enable trend analysis and pattern recognition in international relations
+- 🏷️ **Semantic Organization**: Support structured metadata for better treaty management
+- 🌍 **Global Insights**: Facilitate cross-border research and comparative studies
+
+### Implementation Details:
+The tagging system introduces a new map for storing treaty tags and provides functions for adding, removing, and querying tags. Tags are stored as a list of strings per treaty, with validation to prevent duplicate tags and enforce maximum limits.
+
+### New Functions:
+```clarity
+(add-treaty-tags treaty-id tags)
+(remove-treaty-tag treaty-id tag)
+(get-treaty-tags treaty-id)
+```
+
+This enhancement transforms the Diplomatic Ledger into a more powerful research tool, bridging traditional diplomacy with modern data-driven approaches. By enabling semantic tagging, the platform supports advanced analytics and knowledge discovery in international treaty data. 🚀 #BlockchainDiplomacy #SmartContracts #InternationalRelations
 
