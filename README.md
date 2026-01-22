@@ -27,6 +27,7 @@ A blockchain-based solution for preserving and managing international diplomatic
 (add-annotation treaty-id content)
 (update-treaty-status treaty-id new-status)
 (set-treaty-expiration treaty-id expiration-block)
+(add-treaty-tags treaty-id tags)
 ```
 
 #### For Administrators
@@ -42,6 +43,7 @@ A blockchain-based solution for preserving and managing international diplomatic
 (get-treaty-annotations treaty-id)
 (get-validator-info address)
 (is-treaty-expired treaty-id)
+(get-treaty-tags treaty-id)
 ```
 
 ## 🔐 Security

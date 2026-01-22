@@ -284,3 +284,22 @@
     )
 )
 
+(define-public (add-treaty-tags
+    (treaty-id uint)
+    (tags (list 10 (string-ascii 50))))
+    (let
+        ((current-tags (default-to (list) (map-get? treaty-tags treaty-id))))
+        (asserts! (is-validator tx-sender) err-invalid-validator)
+        (asserts! (<= (+ (len current-tags) (len tags)) u20) err-max-annotations)
+        (map-set treaty-tags
+            treaty-id
+            (unwrap! (as-max-len? (concat current-tags tags) u20) err-max-annotations)
+        )
+        (ok true)
+    )
+)
+
+(define-read-only (get-treaty-tags (treaty-id uint))
+    (ok (default-to (list) (map-get? treaty-tags treaty-id)))
+)
+
